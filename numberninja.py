@@ -31,6 +31,7 @@ score = 0
 question_start_time = time.time()
 response_times = []
 user_input = ""
+time_elapsed = 0
 num1, num2, operation, answer = generate_question()
 show_red_cross = False
 red_cross_timer = 0
@@ -38,6 +39,9 @@ running = True
 
 while running:
     screen.fill(WHITE)
+
+    # Update the elapsed time
+    time_elapsed = time.time() - question_start_time
 
     # Display question
     question_text = FONT.render(f"{num1} {operation} {num2} = ?", True, BLACK)
@@ -88,6 +92,10 @@ while running:
         avg_time = sum(response_times) / len(response_times)
         time_text = FONT.render(f"Avg Time: {avg_time:.2f}s", True, BLACK)
         screen.blit(time_text, (10, 50))
+
+    # Display current thinking time in top-right
+    thinking_time_text = FONT.render(f"Time: {time_elapsed:.1f}s", True, BLACK)
+    screen.blit(thinking_time_text, (WIDTH - 160, 10))
 
     pygame.display.flip()
 
