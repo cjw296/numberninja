@@ -12,9 +12,6 @@ BLACK = (0, 0, 0)
 RED = (255, 0, 0)
 FONT = pygame.font.Font(None, 50)
 
-# Load sound effects
-# wrong_sound = pygame.mixer.Sound("wrong.wav")
-
 # Setup screen
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Number Ninja")
@@ -32,6 +29,7 @@ def generate_question():
 # Game variables
 score = 0
 question_start_time = time.time()
+response_times = []
 user_input = ""
 num1, num2, operation, answer = generate_question()
 show_red_cross = False
@@ -68,11 +66,11 @@ while running:
                         user_input.startswith('-') and user_input[1:].isdigit()):
                     if int(user_input) == answer:
                         elapsed_time = time.time() - question_start_time
+                        response_times.append(elapsed_time)
                         score += max(10 - int(elapsed_time), 1)  # Faster responses earn more points
                         num1, num2, operation, answer = generate_question()
                         question_start_time = time.time()
                     else:
-                        # wrong_sound.play()
                         show_red_cross = True
                         red_cross_timer = time.time()
                     user_input = ""
@@ -84,6 +82,12 @@ while running:
     # Display score
     score_text = FONT.render(f"Score: {score}", True, BLACK)
     screen.blit(score_text, (10, 10))
+
+    # Display average response time
+    if response_times:
+        avg_time = sum(response_times) / len(response_times)
+        time_text = FONT.render(f"Avg Time: {avg_time:.2f}s", True, BLACK)
+        screen.blit(time_text, (10, 50))
 
     pygame.display.flip()
 
