@@ -9,21 +9,35 @@ pygame.init()
 WIDTH, HEIGHT = 800, 600
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
+RED = (255, 0, 0)
 FONT = pygame.font.Font(None, 50)
+
+# Load sound effects
+# wrong_sound = pygame.mixer.Sound("wrong.wav")
 
 # Setup screen
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
-pygame.display.set_caption("Addition & Subtraction Game")
+pygame.display.set_caption("Number Ninja")
+
+
+def generate_question():
+    while True:
+        num1, num2 = random.randint(1, 20), random.randint(1, 20)
+        operation = random.choice(["+", "-"])
+        answer = eval(f"{num1} {operation} {num2}")
+        if answer >= 0:  # Ensure positive answers only
+            return num1, num2, operation, answer
+
 
 # Game variables
 score = 0
 question_start_time = time.time()
 user_input = ""
-num1, num2 = random.randint(1, 20), random.randint(1, 20)
-operation = random.choice(["+", "-"])
-answer = eval(f"{num1} {operation} {num2}")
-
+num1, num2, operation, answer = generate_question()
+show_red_cross = False
+red_cross_timer = 0
 running = True
+
 while running:
     screen.fill(WHITE)
 
@@ -35,22 +49,32 @@ while running:
     input_text = FONT.render(user_input, True, BLACK)
     screen.blit(input_text, (WIDTH // 2 - 50, HEIGHT // 2))
 
+    # Show red cross if incorrect answer was given
+    if show_red_cross:
+        pygame.draw.line(screen, RED, (WIDTH // 2 - 20, HEIGHT // 2 + 50),
+                         (WIDTH // 2 + 20, HEIGHT // 2 + 90), 5)
+        pygame.draw.line(screen, RED, (WIDTH // 2 + 20, HEIGHT // 2 + 50),
+                         (WIDTH // 2 - 20, HEIGHT // 2 + 90), 5)
+        if time.time() - red_cross_timer > 1:
+            show_red_cross = False  # Hide after 1 second
+
     # Event handling
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
         elif event.type == pygame.KEYDOWN:
             if event.key == pygame.K_RETURN:
-                print(f"User entered: {user_input}, Correct answer: {answer}")
                 if user_input.isdigit() or (
                         user_input.startswith('-') and user_input[1:].isdigit()):
                     if int(user_input) == answer:
                         elapsed_time = time.time() - question_start_time
                         score += max(10 - int(elapsed_time), 1)  # Faster responses earn more points
-                        num1, num2 = random.randint(1, 20), random.randint(1, 20)
-                        operation = random.choice(["+", "-"])
-                        answer = eval(f"{num1} {operation} {num2}")
+                        num1, num2, operation, answer = generate_question()
                         question_start_time = time.time()
+                    else:
+                        # wrong_sound.play()
+                        show_red_cross = True
+                        red_cross_timer = time.time()
                     user_input = ""
             elif event.key == pygame.K_BACKSPACE:
                 user_input = user_input[:-1]
