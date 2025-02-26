@@ -3,10 +3,8 @@ import {Box, Button, Center, Flex, Input, Text, HStack, Circle} from "@chakra-ui
 
 export default function App(): JSX.Element {
     const TOTAL_QUESTIONS = 5;
-    const [num1, setNum1] = useState<number>(0);
-    const [num2, setNum2] = useState<number>(0);
-    const [operation, setOperation] = useState<string>("+");
-    const [answer, setAnswer] = useState<number>(0);
+    const [questions, setQuestions] = useState<Array<{ num1: number; num2: number; operation: string; answer: number; difficulty: number }>>([]);
+    const [currentQuestionIndex, setCurrentQuestionIndex] = useState<number>(0);
     const [userInput, setUserInput] = useState<string>("");
     const [levelActive, setLevelActive] = useState<boolean>(false);
     const [showResults, setShowResults] = useState<boolean>(false);
@@ -39,10 +37,16 @@ export default function App(): JSX.Element {
     }, [levelActive, startTime]);
 
     useEffect(() => {
-        if (responseTimes.length < TOTAL_QUESTIONS && levelActive) {
-            generateQuestion();
+        if (responseTimes.length >= TOTAL_QUESTIONS) {
+            const totalTime = responseTimes.reduce((a, b) => a + b, 0);
+            if (!bestTimeReset && (bestTime === null || totalTime < bestTime)) {
+                setBestTime(totalTime);
+                localStorage.setItem("bestTime", totalTime.toFixed(2));
+            }
+            setShowResults(true);
+            setLevelActive(false);
         }
-    }, [levelActive, responseTimes]);
+    }, [responseTimes, bestTime, bestTimeReset]);
 
     useEffect(() => {
         if (inputRef.current) {
@@ -56,35 +60,33 @@ export default function App(): JSX.Element {
         }
     }, [showResults, levelActive]);
 
-    useEffect(() => {
-        if (responseTimes.length >= TOTAL_QUESTIONS) {
-            const totalTime = responseTimes.reduce((a, b) => a + b, 0);
-            if (!bestTimeReset && (bestTime === null || totalTime < bestTime)) {
-                setBestTime(totalTime);
-                localStorage.setItem("bestTime", totalTime.toFixed(2));
-            }
-            setShowResults(true);
-            setLevelActive(false);
-        }
-    }, [responseTimes, bestTime, bestTimeReset]);
+    const calculateDifficulty = (n1: number, n2: number, op: string): number => {
+        const numDigits = Math.max(n1.toString().length, n2.toString().length);
+        const carriesOrBorrows = op === "+" ? (n1 % 10 + n2 % 10 >= 10 ? 1 : 0) : (n1 % 10 < n2 % 10 ? 1 : 0);
+        const landmarkProximity = [10, 20, 50, 100].some(landmark => Math.abs(n1 + (op === "+" ? n2 : -n2) - landmark) <= 2) ? 1 : 0;
+        return numDigits + carriesOrBorrows + landmarkProximity;
+    };
 
-    const generateQuestion = (): void => {
-        setShowError(false);
-        const n1 = Math.floor(Math.random() * 20) + 1;
-        const n2 = Math.floor(Math.random() * n1) + 1;
-        const ops = ["+", "-"];
-        const op = ops[Math.floor(Math.random() * ops.length)];
-        setNum1(n1);
-        setNum2(n2);
-        setOperation(op);
-        setAnswer(op === "+" ? n1 + n2 : n1 - n2);
+    const generateQuestions = (): void => {
+        const newQuestions = [];
+        while (newQuestions.length < TOTAL_QUESTIONS) {
+            const n1 = Math.floor(Math.random() * 20) + 1;
+            const n2 = Math.floor(Math.random() * n1) + 1;
+            const ops = ["+", "-"];
+            const op = ops[Math.floor(Math.random() * ops.length)];
+            const difficulty = calculateDifficulty(n1, n2, op);
+            newQuestions.push({ num1: n1, num2: n2, operation: op, answer: op === "+" ? n1 + n2 : n1 - n2, difficulty });
+        }
+        setQuestions(newQuestions);
+        setCurrentQuestionIndex(0);
         setStartTime(Date.now());
     };
 
     const handleAnswerSubmit = (): void => {
-        if (parseInt(userInput) === answer) {
+        if (parseInt(userInput) === questions[currentQuestionIndex].answer) {
             const elapsedTimeValue = startTime ? (Date.now() - startTime) / 1000 : 0;
             setResponseTimes(prev => [...prev, elapsedTimeValue]);
+            setCurrentQuestionIndex(prev => prev + 1);
         } else {
             setShowError(true);
         }
@@ -126,6 +128,7 @@ export default function App(): JSX.Element {
                             setResponseTimes([]);
                             setLevelActive(true);
                             setBestTimeReset(false);
+                            generateQuestions();
                         }}>
                             Play Again
                         </Button>
@@ -136,7 +139,7 @@ export default function App(): JSX.Element {
                             {elapsedTime.toFixed(1)}s
                         </Text>
                         <Text fontSize="2xl">
-                            {num1} {operation} {num2} = ?
+                            {questions[currentQuestionIndex]?.num1} {questions[currentQuestionIndex]?.operation} {questions[currentQuestionIndex]?.num2} = ?
                         </Text>
                         <Input
                             ref={inputRef}
@@ -148,14 +151,9 @@ export default function App(): JSX.Element {
                             mt={4}
                         />
                         {showError && <Text color="red.500" mt={2}>✖ Incorrect!</Text>}
-                        <HStack mt={4} spacing={2}>
-                            {[...Array(TOTAL_QUESTIONS)].map((_, index) => (
-                                <Circle key={index} size="20px" bg={index < responseTimes.length ? "green.500" : "gray.300"} />
-                            ))}
-                        </HStack>
                     </Box>
                 ) : (
-                    <Button ref={buttonRef} onClick={() => { setLevelActive(true); }}>Play</Button>
+                    <Button ref={buttonRef} onClick={() => { setLevelActive(true); generateQuestions(); }}>Play</Button>
                 )}
                 {showResults && (
                     <Button position="absolute" bottom={4} onClick={resetBestTime}>Reset Best Time</Button>
