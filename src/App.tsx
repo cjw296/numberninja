@@ -14,6 +14,7 @@ export default function App(): JSX.Element {
     const [showResults, setShowResults] = useState<boolean>(false);
     const [responseTimes, setResponseTimes] = useState<number[]>([]);
     const [startTime, setStartTime] = useState<number | null>(null);
+    const [showError, setShowError] = useState<boolean>(false);
 
     useEffect(() => {
         if (levelActive) {
@@ -22,6 +23,7 @@ export default function App(): JSX.Element {
     }, [levelActive]);
 
     const generateQuestion = (): void => {
+        setShowError(false);
         const n1 = Math.floor(Math.random() * 20) + 1;
         const n2 = Math.floor(Math.random() * n1) + 1;
         const ops = ["+", "-"];
@@ -39,12 +41,15 @@ export default function App(): JSX.Element {
             setResponseTimes([...responseTimes, elapsedTime]);
             setScore(score + Math.max(10 - Math.floor(elapsedTime), 1));
             setQuestionsAnswered(questionsAnswered + 1);
+            setShowError(false);
             if (questionsAnswered + 1 >= TOTAL_QUESTIONS) {
                 setLevelActive(false);
                 setShowResults(true);
             } else {
                 generateQuestion();
             }
+        } else {
+            setShowError(true);
         }
         setUserInput("");
     };
@@ -78,8 +83,7 @@ export default function App(): JSX.Element {
                         <Text fontSize="2xl">Final Score: {score}</Text>
                         {responseTimes.length > 0 && (
                             <Text fontSize="lg">
-                                Avg Time:{" "}
-                                {(
+                                Avg Time: {(
                                     responseTimes.reduce((a, b) => a + b, 0) / responseTimes.length
                                 ).toFixed(2)}
                                 s
@@ -108,10 +112,9 @@ export default function App(): JSX.Element {
                             onKeyDown={handleKeyDown}
                             textAlign="center"
                             width="100px"
+                            mt={4}
                         />
-                        <Button mt={4} onClick={handleAnswerSubmit}>
-                            Submit
-                        </Button>
+                        {showError && <Text color="red.500" mt={2}>✖ Incorrect!</Text>}
                     </Box>
                 ) : (
                     <Button onClick={() => setLevelActive(true)}>Play</Button>
