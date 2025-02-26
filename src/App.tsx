@@ -14,8 +14,17 @@ export default function App(): JSX.Element {
     const [startTime, setStartTime] = useState<number | null>(null);
     const [showError, setShowError] = useState<boolean>(false);
     const [elapsedTime, setElapsedTime] = useState<number>(0);
+    const [bestTime, setBestTime] = useState<number | null>(null);
+    const [bestTimeReset, setBestTimeReset] = useState<boolean>(false);
     const buttonRef = useRef<HTMLButtonElement>(null);
     const inputRef = useRef<HTMLInputElement>(null);
+
+    useEffect(() => {
+        const storedBestTime = localStorage.getItem("bestTime");
+        if (storedBestTime) {
+            setBestTime(parseFloat(storedBestTime));
+        }
+    }, []);
 
     useEffect(() => {
         let timer: NodeJS.Timeout;
@@ -49,10 +58,15 @@ export default function App(): JSX.Element {
 
     useEffect(() => {
         if (responseTimes.length >= TOTAL_QUESTIONS) {
+            const totalTime = responseTimes.reduce((a, b) => a + b, 0);
+            if (!bestTimeReset && (bestTime === null || totalTime < bestTime)) {
+                setBestTime(totalTime);
+                localStorage.setItem("bestTime", totalTime.toFixed(2));
+            }
             setShowResults(true);
             setLevelActive(false);
         }
-    }, [responseTimes]);
+    }, [responseTimes, bestTime, bestTimeReset]);
 
     const generateQuestion = (): void => {
         setShowError(false);
@@ -77,6 +91,12 @@ export default function App(): JSX.Element {
         setUserInput("");
     };
 
+    const resetBestTime = (): void => {
+        setBestTime(null);
+        setBestTimeReset(true);
+        localStorage.removeItem("bestTime");
+    };
+
     return (
         <Center w="100vw" h="100vh" bg="gray.100">
             <Flex
@@ -92,18 +112,21 @@ export default function App(): JSX.Element {
                 minH="500px"
                 position="relative"
             >
+                {bestTime !== null && !bestTimeReset && (
+                    <Text position="absolute" top={2} left={4} fontSize="lg" fontWeight="bold">
+                        Best: {bestTime.toFixed(2)}s
+                    </Text>
+                )}
                 {showResults ? (
                     <Box textAlign="center">
                         <Text fontSize="2xl">Total Time: {responseTimes.reduce((a, b) => a + b, 0).toFixed(2)}s</Text>
-                        <Button
-                            ref={buttonRef}
-                            mt={4}
-                            onClick={() => {
-                                setShowResults(false);
-                                setResponseTimes([]);
-                                setLevelActive(true);
-                            }}
-                        >
+                        {bestTime !== null && !bestTimeReset && <Text fontSize="lg">Best Time: {bestTime.toFixed(2)}s</Text>}
+                        <Button ref={buttonRef} mt={4} onClick={() => {
+                            setShowResults(false);
+                            setResponseTimes([]);
+                            setLevelActive(true);
+                            setBestTimeReset(false);
+                        }}>
                             Play Again
                         </Button>
                     </Box>
@@ -133,6 +156,9 @@ export default function App(): JSX.Element {
                     </Box>
                 ) : (
                     <Button ref={buttonRef} onClick={() => { setLevelActive(true); }}>Play</Button>
+                )}
+                {showResults && (
+                    <Button position="absolute" bottom={4} onClick={resetBestTime}>Reset Best Time</Button>
                 )}
             </Flex>
         </Center>
