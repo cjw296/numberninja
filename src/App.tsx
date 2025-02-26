@@ -1,5 +1,5 @@
 import {ChangeEvent, JSX, KeyboardEvent, useEffect, useRef, useState} from "react";
-import {Box, Button, Center, Flex, Input, Text} from "@chakra-ui/react";
+import {Box, Button, Center, Flex, Input, Text, HStack, Circle} from "@chakra-ui/react";
 
 export default function App(): JSX.Element {
     const TOTAL_QUESTIONS = 5;
@@ -159,6 +159,11 @@ export default function App(): JSX.Element {
                             mt={4}
                         />
                         {showError && <Text color="red.500" mt={2}>✖ Incorrect!</Text>}
+                        <HStack mt={4} spacing={2}>
+                            {[...Array(TOTAL_QUESTIONS)].map((_, index) => (
+                                <Circle key={index} size="20px" bg={index < questionsAnswered ? "green.500" : "gray.300"} />
+                            ))}
+                        </HStack>
                     </Box>
                 ) : (
                     <Button onClick={() => setLevelActive(true)}>Play</Button>
