@@ -42,6 +42,16 @@ export default function App(): JSX.Element {
         }
     }, [levelActive]);
 
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === "Enter" && !levelActive) {
+                setLevelActive(true);
+            }
+        };
+        window.addEventListener("keydown", handleKeyDown);
+        return () => window.removeEventListener("keydown", handleKeyDown);
+    }, [levelActive]);
+
     const generateQuestion = (): void => {
         setShowError(false);
         const n1 = Math.floor(Math.random() * 20) + 1;
