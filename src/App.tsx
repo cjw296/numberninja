@@ -111,9 +111,14 @@ export default function App(): JSX.Element {
                 position="relative"
             >
                 {levelActive && !showResults && (
-                    <Text position="absolute" top={2} right={4} fontSize="lg" fontWeight="bold">
-                        {elapsedTime.toFixed(1)}s
-                    </Text>
+                    <>
+                        <Text position="absolute" top={2} right={4} fontSize="lg" fontWeight="bold">
+                            {elapsedTime.toFixed(1)}s
+                        </Text>
+                        <Text position="absolute" top={2} left={4} fontSize="lg" fontWeight="bold">
+                            Score: {score}
+                        </Text>
+                    </>
                 )}
                 {showResults ? (
                     <Box textAlign="center">
