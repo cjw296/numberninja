@@ -75,6 +75,7 @@ export default function App(): JSX.Element {
             if (questionsAnswered + 1 >= TOTAL_QUESTIONS) {
                 setLevelActive(false);
                 setShowResults(true);
+                setElapsedTime(0);
             } else {
                 generateQuestion();
             }
@@ -109,7 +110,7 @@ export default function App(): JSX.Element {
                 minH="500px"
                 position="relative"
             >
-                {levelActive && (
+                {levelActive && !showResults && (
                     <Text position="absolute" top={2} right={4} fontSize="lg" fontWeight="bold">
                         {elapsedTime.toFixed(1)}s
                     </Text>
