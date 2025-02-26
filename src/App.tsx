@@ -9,7 +9,6 @@ export default function App(): JSX.Element {
     const [answer, setAnswer] = useState<number>(0);
     const [userInput, setUserInput] = useState<string>("");
     const [score, setScore] = useState<number>(0);
-    const [questionsAnswered, setQuestionsAnswered] = useState<number>(0);
     const [levelActive, setLevelActive] = useState<boolean>(false);
     const [showResults, setShowResults] = useState<boolean>(false);
     const [responseTimes, setResponseTimes] = useState<number[]>([]);
@@ -32,10 +31,10 @@ export default function App(): JSX.Element {
     }, [levelActive, startTime]);
 
     useEffect(() => {
-        if (levelActive) {
+        if (responseTimes.length < TOTAL_QUESTIONS && levelActive) {
             generateQuestion();
         }
-    }, [levelActive]);
+    }, [levelActive, responseTimes]);
 
     useEffect(() => {
         if (inputRef.current) {
@@ -48,6 +47,13 @@ export default function App(): JSX.Element {
             buttonRef.current.focus();
         }
     }, [showResults, levelActive]);
+
+    useEffect(() => {
+        if (responseTimes.length >= TOTAL_QUESTIONS) {
+            setShowResults(true);
+            setLevelActive(false);
+        }
+    }, [responseTimes]);
 
     const generateQuestion = (): void => {
         setShowError(false);
@@ -65,18 +71,8 @@ export default function App(): JSX.Element {
     const handleAnswerSubmit = (): void => {
         if (parseInt(userInput) === answer) {
             const elapsedTimeValue = startTime ? (Date.now() - startTime) / 1000 : 0;
-            setResponseTimes([...responseTimes, elapsedTimeValue]);
-            setScore(prevScore => prevScore + Math.max(10 - Math.floor(elapsedTimeValue), 1));
-
-            if (questionsAnswered + 1 >= TOTAL_QUESTIONS) {
-                setLevelActive(false);
-                setShowResults(true);
-                setElapsedTime(0);
-            } else {
-                setQuestionsAnswered(prevCount => prevCount + 1);
-                generateQuestion();
-            }
-            setShowError(false);
+            setResponseTimes(prev => [...prev, elapsedTimeValue]);
+            setScore(prevScore => prevScore + 10);
         } else {
             setShowError(true);
         }
@@ -98,16 +94,6 @@ export default function App(): JSX.Element {
                 minH="500px"
                 position="relative"
             >
-                {levelActive && !showResults && (
-                    <>
-                        <Text position="absolute" top={2} right={4} fontSize="lg" fontWeight="bold">
-                            {elapsedTime.toFixed(1)}s
-                        </Text>
-                        <Text position="absolute" top={2} left={4} fontSize="lg" fontWeight="bold">
-                            Score: {score}
-                        </Text>
-                    </>
-                )}
                 {showResults ? (
                     <Box textAlign="center">
                         <Text fontSize="2xl">Final Score: {score}</Text>
@@ -125,10 +111,8 @@ export default function App(): JSX.Element {
                             onClick={() => {
                                 setShowResults(false);
                                 setScore(0);
-                                setQuestionsAnswered(0);
                                 setResponseTimes([]);
                                 setLevelActive(true);
-                                generateQuestion();
                             }}
                         >
                             Play Again
@@ -136,6 +120,12 @@ export default function App(): JSX.Element {
                     </Box>
                 ) : levelActive ? (
                     <Box textAlign="center">
+                        <Text position="absolute" top={2} right={4} fontSize="lg" fontWeight="bold">
+                            {elapsedTime.toFixed(1)}s
+                        </Text>
+                        <Text position="absolute" top={2} left={4} fontSize="lg" fontWeight="bold">
+                            Score: {score}
+                        </Text>
                         <Text fontSize="2xl">
                             {num1} {operation} {num2} = ?
                         </Text>
@@ -151,12 +141,12 @@ export default function App(): JSX.Element {
                         {showError && <Text color="red.500" mt={2}>✖ Incorrect!</Text>}
                         <HStack mt={4} spacing={2}>
                             {[...Array(TOTAL_QUESTIONS)].map((_, index) => (
-                                <Circle key={index} size="20px" bg={index < questionsAnswered ? "green.500" : "gray.300"} />
+                                <Circle key={index} size="20px" bg={index < responseTimes.length ? "green.500" : "gray.300"} />
                             ))}
                         </HStack>
                     </Box>
                 ) : (
-                    <Button ref={buttonRef} onClick={() => { setLevelActive(true); generateQuestion(); }}>Play</Button>
+                    <Button ref={buttonRef} onClick={() => { setLevelActive(true); }}>Play</Button>
                 )}
             </Flex>
         </Center>
