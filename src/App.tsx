@@ -122,6 +122,7 @@ export default function App(): JSX.Element {
                                 setScore(0);
                                 setQuestionsAnswered(0);
                                 setResponseTimes([]);
+                                setLevelActive(true);
                             }}
                         >
                             Play Again
