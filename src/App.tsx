@@ -8,7 +8,6 @@ export default function App(): JSX.Element {
     const [operation, setOperation] = useState<string>("+");
     const [answer, setAnswer] = useState<number>(0);
     const [userInput, setUserInput] = useState<string>("");
-    const [score, setScore] = useState<number>(0);
     const [levelActive, setLevelActive] = useState<boolean>(false);
     const [showResults, setShowResults] = useState<boolean>(false);
     const [responseTimes, setResponseTimes] = useState<number[]>([]);
@@ -72,7 +71,6 @@ export default function App(): JSX.Element {
         if (parseInt(userInput) === answer) {
             const elapsedTimeValue = startTime ? (Date.now() - startTime) / 1000 : 0;
             setResponseTimes(prev => [...prev, elapsedTimeValue]);
-            setScore(prevScore => prevScore + 10);
         } else {
             setShowError(true);
         }
@@ -96,21 +94,12 @@ export default function App(): JSX.Element {
             >
                 {showResults ? (
                     <Box textAlign="center">
-                        <Text fontSize="2xl">Final Score: {score}</Text>
-                        {responseTimes.length > 0 && (
-                            <Text fontSize="lg">
-                                Avg Time: {(
-                                    responseTimes.reduce((a, b) => a + b, 0) / responseTimes.length
-                                ).toFixed(2)}
-                                s
-                            </Text>
-                        )}
+                        <Text fontSize="2xl">Total Time: {responseTimes.reduce((a, b) => a + b, 0).toFixed(2)}s</Text>
                         <Button
                             ref={buttonRef}
                             mt={4}
                             onClick={() => {
                                 setShowResults(false);
-                                setScore(0);
                                 setResponseTimes([]);
                                 setLevelActive(true);
                             }}
@@ -122,9 +111,6 @@ export default function App(): JSX.Element {
                     <Box textAlign="center">
                         <Text position="absolute" top={2} right={4} fontSize="lg" fontWeight="bold">
                             {elapsedTime.toFixed(1)}s
-                        </Text>
-                        <Text position="absolute" top={2} left={4} fontSize="lg" fontWeight="bold">
-                            Score: {score}
                         </Text>
                         <Text fontSize="2xl">
                             {num1} {operation} {num2} = ?
