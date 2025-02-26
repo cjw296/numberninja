@@ -1,4 +1,4 @@
-import {ChangeEvent, JSX, KeyboardEvent, useEffect, useRef, useState} from "react";
+import {ChangeEvent, JSX, useEffect, useRef, useState} from "react";
 import {Box, Button, Center, Flex, Input, Text, HStack, Circle} from "@chakra-ui/react";
 
 export default function App(): JSX.Element {
@@ -16,6 +16,7 @@ export default function App(): JSX.Element {
     const [startTime, setStartTime] = useState<number | null>(null);
     const [showError, setShowError] = useState<boolean>(false);
     const [elapsedTime, setElapsedTime] = useState<number>(0);
+    const buttonRef = useRef<HTMLButtonElement>(null);
     const inputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
@@ -43,14 +44,10 @@ export default function App(): JSX.Element {
     }, [levelActive]);
 
     useEffect(() => {
-        const handleKeyDown = (e: KeyboardEvent) => {
-            if (e.key === "Enter" && !levelActive) {
-                setLevelActive(true);
-            }
-        };
-        window.addEventListener("keydown", handleKeyDown);
-        return () => window.removeEventListener("keydown", handleKeyDown);
-    }, [levelActive]);
+        if (!levelActive && buttonRef.current) {
+            buttonRef.current.focus();
+        }
+    }, [showResults, levelActive]);
 
     const generateQuestion = (): void => {
         setShowError(false);
@@ -69,30 +66,21 @@ export default function App(): JSX.Element {
         if (parseInt(userInput) === answer) {
             const elapsedTimeValue = startTime ? (Date.now() - startTime) / 1000 : 0;
             setResponseTimes([...responseTimes, elapsedTimeValue]);
-            setScore(score + Math.max(10 - Math.floor(elapsedTimeValue), 1));
-            setQuestionsAnswered(questionsAnswered + 1);
-            setShowError(false);
+            setScore(prevScore => prevScore + Math.max(10 - Math.floor(elapsedTimeValue), 1));
+
             if (questionsAnswered + 1 >= TOTAL_QUESTIONS) {
                 setLevelActive(false);
                 setShowResults(true);
                 setElapsedTime(0);
             } else {
+                setQuestionsAnswered(prevCount => prevCount + 1);
                 generateQuestion();
             }
+            setShowError(false);
         } else {
             setShowError(true);
         }
         setUserInput("");
-    };
-
-    const handleInputChange = (e: ChangeEvent<HTMLInputElement>): void => {
-        setUserInput(e.target.value);
-    };
-
-    const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>): void => {
-        if (e.key === "Enter") {
-            handleAnswerSubmit();
-        }
     };
 
     return (
@@ -132,6 +120,7 @@ export default function App(): JSX.Element {
                             </Text>
                         )}
                         <Button
+                            ref={buttonRef}
                             mt={4}
                             onClick={() => {
                                 setShowResults(false);
@@ -139,6 +128,7 @@ export default function App(): JSX.Element {
                                 setQuestionsAnswered(0);
                                 setResponseTimes([]);
                                 setLevelActive(true);
+                                generateQuestion();
                             }}
                         >
                             Play Again
@@ -152,8 +142,8 @@ export default function App(): JSX.Element {
                         <Input
                             ref={inputRef}
                             value={userInput}
-                            onChange={handleInputChange}
-                            onKeyDown={handleKeyDown}
+                            onChange={(e) => setUserInput(e.target.value)}
+                            onKeyDown={(e) => e.key === "Enter" && handleAnswerSubmit()}
                             textAlign="center"
                             width="100px"
                             mt={4}
@@ -166,7 +156,7 @@ export default function App(): JSX.Element {
                         </HStack>
                     </Box>
                 ) : (
-                    <Button onClick={() => setLevelActive(true)}>Play</Button>
+                    <Button ref={buttonRef} onClick={() => { setLevelActive(true); generateQuestion(); }}>Play</Button>
                 )}
             </Flex>
         </Center>
