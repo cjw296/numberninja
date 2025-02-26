@@ -1,4 +1,4 @@
-import {ChangeEvent, JSX, KeyboardEvent, useEffect, useState} from "react";
+import {ChangeEvent, JSX, KeyboardEvent, useEffect, useRef, useState} from "react";
 import {Box, Button, Center, Flex, Input, Text} from "@chakra-ui/react";
 
 export default function App(): JSX.Element {
@@ -15,10 +15,30 @@ export default function App(): JSX.Element {
     const [responseTimes, setResponseTimes] = useState<number[]>([]);
     const [startTime, setStartTime] = useState<number | null>(null);
     const [showError, setShowError] = useState<boolean>(false);
+    const [elapsedTime, setElapsedTime] = useState<number>(0);
+    const inputRef = useRef<HTMLInputElement>(null);
+
+    useEffect(() => {
+        let timer: NodeJS.Timeout;
+        if (levelActive && startTime !== null) {
+            timer = setInterval(() => {
+                setElapsedTime(((Date.now() - startTime) / 1000));
+            }, 100);
+        } else {
+            setElapsedTime(0);
+        }
+        return () => clearInterval(timer);
+    }, [levelActive, startTime]);
 
     useEffect(() => {
         if (levelActive) {
             generateQuestion();
+        }
+    }, [levelActive]);
+
+    useEffect(() => {
+        if (inputRef.current) {
+            inputRef.current.focus();
         }
     }, [levelActive]);
 
@@ -37,9 +57,9 @@ export default function App(): JSX.Element {
 
     const handleAnswerSubmit = (): void => {
         if (parseInt(userInput) === answer) {
-            const elapsedTime = startTime ? (Date.now() - startTime) / 1000 : 0;
-            setResponseTimes([...responseTimes, elapsedTime]);
-            setScore(score + Math.max(10 - Math.floor(elapsedTime), 1));
+            const elapsedTimeValue = startTime ? (Date.now() - startTime) / 1000 : 0;
+            setResponseTimes([...responseTimes, elapsedTimeValue]);
+            setScore(score + Math.max(10 - Math.floor(elapsedTimeValue), 1));
             setQuestionsAnswered(questionsAnswered + 1);
             setShowError(false);
             if (questionsAnswered + 1 >= TOTAL_QUESTIONS) {
@@ -77,7 +97,13 @@ export default function App(): JSX.Element {
                 w="90%"
                 maxW="500px"
                 minH="500px"
+                position="relative"
             >
+                {levelActive && (
+                    <Text position="absolute" top={2} right={4} fontSize="lg" fontWeight="bold">
+                        {elapsedTime.toFixed(1)}s
+                    </Text>
+                )}
                 {showResults ? (
                     <Box textAlign="center">
                         <Text fontSize="2xl">Final Score: {score}</Text>
@@ -107,6 +133,7 @@ export default function App(): JSX.Element {
                             {num1} {operation} {num2} = ?
                         </Text>
                         <Input
+                            ref={inputRef}
                             value={userInput}
                             onChange={handleInputChange}
                             onKeyDown={handleKeyDown}
