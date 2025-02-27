@@ -80,6 +80,10 @@ export default function App(): JSX.Element {
         setQuestions(newQuestions);
         setCurrentQuestionIndex(0);
         setStartTime(Date.now());
+        setUserInput("");
+        setResponseTimes([]);
+        setLevelActive(true);
+        setShowResults(false);
     };
 
     const handleAnswerSubmit = (): void => {
@@ -123,15 +127,7 @@ export default function App(): JSX.Element {
                     <Box textAlign="center">
                         <Text fontSize="2xl">Total Time: {responseTimes.reduce((a, b) => a + b, 0).toFixed(2)}s</Text>
                         {bestTime !== null && !bestTimeReset && <Text fontSize="lg">Best Time: {bestTime.toFixed(2)}s</Text>}
-                        <Button ref={buttonRef} mt={4} onClick={() => {
-                            setShowResults(false);
-                            setResponseTimes([]);
-                            setLevelActive(true);
-                            setBestTimeReset(false);
-                            generateQuestions();
-                        }}>
-                            Play Again
-                        </Button>
+                        <Button ref={buttonRef} mt={4} onClick={generateQuestions}>Play Again</Button>
                     </Box>
                 ) : levelActive ? (
                     <Box textAlign="center">
@@ -151,9 +147,14 @@ export default function App(): JSX.Element {
                             mt={4}
                         />
                         {showError && <Text color="red.500" mt={2}>✖ Incorrect!</Text>}
+                        <HStack mt={4} spacing={2}>
+                            {[...Array(TOTAL_QUESTIONS)].map((_, index) => (
+                                <Circle key={index} size="20px" bg={index < responseTimes.length ? "green.500" : "gray.300"} />
+                            ))}
+                        </HStack>
                     </Box>
                 ) : (
-                    <Button ref={buttonRef} onClick={() => { setLevelActive(true); generateQuestions(); }}>Play</Button>
+                    <Button ref={buttonRef} onClick={generateQuestions}>Play</Button>
                 )}
                 {showResults && (
                     <Button position="absolute" bottom={4} onClick={resetBestTime}>Reset Best Time</Button>
